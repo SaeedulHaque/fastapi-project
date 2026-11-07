@@ -1,4 +1,6 @@
-from pydantic import BaseModel, ConfigDict, Field
+from datetime import datetime
+
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class StudentBase(BaseModel):
@@ -10,6 +12,20 @@ class StudentBase(BaseModel):
 
 class StudentCreate(StudentBase):
     pass
+
+
+class StudentUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=2, max_length=100)
+    email: str | None = None
+    age: int | None = Field(default=None, ge=5, le=100)
+    phone: str | None = None
+
+    @field_validator("name", "email")
+    @classmethod
+    def required_fields_cannot_be_null(cls, value):
+        if value is None:
+            raise ValueError("cannot be null")
+        return value
 
 
 class StudentOut(StudentBase):
@@ -45,6 +61,11 @@ class UserOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class Token(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+
+
 class ErrorBody(BaseModel):
     code: str
     message: str
@@ -52,3 +73,14 @@ class ErrorBody(BaseModel):
 
 class ErrorOut(BaseModel):
     error: ErrorBody
+
+
+class StudentFileOut(BaseModel):
+    id: int
+    student_id: int
+    original_name: str
+    content_type: str
+    size_bytes: int
+    uploaded_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)

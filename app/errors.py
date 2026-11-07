@@ -28,6 +28,22 @@ class NotFoundError(AppError):
         super().__init__(f"{what} not found")
 
 
+class FileTooLargeError(AppError):
+    status_code = 413
+    code = "file_too_large"
+
+    def __init__(self, limit_bytes: int):
+        super().__init__(f"The file is larger than {limit_bytes // (1024 * 1024)} MB")
+
+
+class UnsupportedFileTypeError(AppError):
+    status_code = 415
+    code = "unsupported_file_type"
+
+    def __init__(self, allowed: str):
+        super().__init__(f"This file type is not allowed. Allowed types: {allowed}")
+
+
 def error_response(status_code: int, code: str, message, headers=None, **extra):
     body = {"error": {"code": code, "message": message, **extra}}
     return JSONResponse(status_code=status_code, content=body, headers=headers)

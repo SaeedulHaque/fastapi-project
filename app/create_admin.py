@@ -1,9 +1,18 @@
 """Create an admin user:  python -m app.create_admin admin@school.test"""
+import asyncio
 import sys
 from getpass import getpass
 
 from app import service
-from app.database import SessionLocal
+from app.database import SessionLocal, engine
+
+
+async def create(email: str, password: str) -> None:
+    try:
+        async with SessionLocal() as db:
+            await service.create_user(db, email, password, role="admin")
+    finally:
+        await engine.dispose()  # close the pooled connections before the loop ends
 
 
 def main() -> None:
@@ -17,12 +26,11 @@ def main() -> None:
         print("The password is too short.")
         sys.exit(1)
 
-    with SessionLocal() as db:
-        try:
-            service.create_user(db, email, password, role="admin")
-        except Exception:
-            print("Could not create the user. Does that email already exist?")
-            sys.exit(1)
+    try:
+        asyncio.run(create(email, password))
+    except Exception:
+        print("Could not create the user. Does that email already exist?")
+        sys.exit(1)
     print(f"Admin created: {email}")
 
 
